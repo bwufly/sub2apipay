@@ -3,6 +3,7 @@
 interface OrderStatusProps {
   status: string;
   onBack: () => void;
+  dark?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: string; message: string }> = {
@@ -44,7 +45,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: string
   },
 };
 
-export default function OrderStatus({ status, onBack }: OrderStatusProps) {
+export default function OrderStatus({ status, onBack, dark = false }: OrderStatusProps) {
   const config = STATUS_CONFIG[status] || {
     label: status,
     color: 'text-gray-600',
