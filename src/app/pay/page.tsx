@@ -304,7 +304,7 @@ function PayContent() {
     <PayPageLayout
       isDark={isDark}
       isEmbedded={isEmbedded}
-      maxWidth={isMobile ? 'sm' : 'full'}
+      maxWidth={isMobile ? 'sm' : 'lg'}
       title="Sub2API 余额充值"
       subtitle="安全支付，自动到账"
       actions={!isMobile ? (

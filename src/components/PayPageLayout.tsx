@@ -3,7 +3,7 @@ import React from 'react';
 interface PayPageLayoutProps {
   isDark: boolean;
   isEmbedded?: boolean;
-  maxWidth?: 'sm' | 'full';
+  maxWidth?: 'sm' | 'lg' | 'full';
   title: string;
   subtitle: string;
   actions?: React.ReactNode;
@@ -19,30 +19,37 @@ export default function PayPageLayout({
   actions,
   children,
 }: PayPageLayoutProps) {
+  const maxWidthClass = maxWidth === 'sm' ? 'max-w-lg' : maxWidth === 'lg' ? 'max-w-6xl' : '';
+
   return (
     <div
       className={[
-        'relative min-h-screen w-full overflow-hidden p-3 sm:p-4',
+        'relative w-full overflow-hidden',
+        isEmbedded ? 'p-2' : 'min-h-screen p-3 sm:p-4',
         isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900',
       ].join(' ')}
     >
-      <div
-        className={[
-          'pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full blur-3xl',
-          isDark ? 'bg-indigo-500/25' : 'bg-sky-300/35',
-        ].join(' ')}
-      />
-      <div
-        className={[
-          'pointer-events-none absolute -right-24 bottom-0 h-64 w-64 rounded-full blur-3xl',
-          isDark ? 'bg-cyan-400/20' : 'bg-indigo-200/45',
-        ].join(' ')}
-      />
+      {!isEmbedded && (
+        <>
+          <div
+            className={[
+              'pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full blur-3xl',
+              isDark ? 'bg-indigo-500/25' : 'bg-sky-300/35',
+            ].join(' ')}
+          />
+          <div
+            className={[
+              'pointer-events-none absolute -right-24 bottom-0 h-64 w-64 rounded-full blur-3xl',
+              isDark ? 'bg-cyan-400/20' : 'bg-indigo-200/45',
+            ].join(' ')}
+          />
+        </>
+      )}
 
       <div
         className={[
           'relative mx-auto w-full rounded-3xl border p-4 sm:p-6',
-          maxWidth === 'sm' ? 'max-w-lg' : 'max-w-6xl',
+          maxWidthClass,
           isDark
             ? 'border-slate-700/70 bg-slate-900/85 shadow-2xl shadow-black/35'
             : 'border-slate-200/90 bg-white/95 shadow-2xl shadow-slate-300/45',
