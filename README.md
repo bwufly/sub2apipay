@@ -116,6 +116,17 @@ ENABLED_PAYMENT_TYPES=alipay,wxpay
 
 #### EasyPay（支付宝 / 微信支付）
 
+支付提供商只需兼容**易支付（EasyPay）协议**即可接入，例如 [ZPay](https://z-pay.cn/?uid=23808) 等平台（链接含本项目作者的邀请码，介意可去掉）。
+
+<details>
+<summary>ZPay 平台预览</summary>
+
+![ZPay 预览](./docs/zpay-preview.png)
+
+</details>
+
+> **注意**：支付渠道的安全性、稳定性及合规性请自行鉴别，本项目不对任何第三方支付服务商做担保或背书。
+
 | 变量 | 说明 |
 |------|------|
 | `EASY_PAY_PID` | EasyPay 商户 ID |
