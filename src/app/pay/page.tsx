@@ -187,6 +187,20 @@ function PayContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, token]);
 
+  useEffect(() => {
+    if (step !== 'result' || finalStatus !== 'COMPLETED') return;
+    // 立即在后台刷新余额，2.2s 显示结果页后再切回表单（届时余额已更新）
+    loadUserAndOrders();
+    const timer = setTimeout(() => {
+      setStep('form');
+      setOrderResult(null);
+      setFinalStatus('');
+      setError('');
+    }, 2200);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, finalStatus]);
+
   if (!effectiveUserId || Number.isNaN(effectiveUserId) || effectiveUserId <= 0) {
     return (
       <div className={`flex min-h-screen items-center justify-center p-4 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
@@ -290,20 +304,6 @@ function PayContent() {
     setError('');
   };
 
-  useEffect(() => {
-    if (step !== 'result' || finalStatus !== 'COMPLETED') return;
-    // 立即在后台刷新余额，2.2s 显示结果页后再切回表单（届时余额已更新）
-    loadUserAndOrders();
-    const timer = setTimeout(() => {
-      setStep('form');
-      setOrderResult(null);
-      setFinalStatus('');
-      setError('');
-    }, 2200);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, finalStatus]);
-
   return (
     <PayPageLayout
       isDark={isDark}
@@ -311,35 +311,37 @@ function PayContent() {
       maxWidth={isMobile ? 'sm' : 'lg'}
       title="Sub2API 余额充值"
       subtitle="安全支付，自动到账"
-      actions={!isMobile ? (
-        <>
-          <button
-            type="button"
-            onClick={loadUserAndOrders}
-            className={[
-              'inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
-              isDark ? 'border-slate-600 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100',
-            ].join(' ')}
-          >
-            刷新
-          </button>
-          <a
-            href={ordersUrl}
-            className={[
-              'inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
-              isDark ? 'border-slate-600 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100',
-            ].join(' ')}
-          >
-            我的订单
-          </a>
-        </>
-      ) : undefined}
+      actions={
+        !isMobile ? (
+          <>
+            <button
+              type="button"
+              onClick={loadUserAndOrders}
+              className={[
+                'inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
+                isDark
+                  ? 'border-slate-600 text-slate-200 hover:bg-slate-800'
+                  : 'border-slate-300 text-slate-700 hover:bg-slate-100',
+              ].join(' ')}
+            >
+              刷新
+            </button>
+            <a
+              href={ordersUrl}
+              className={[
+                'inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
+                isDark
+                  ? 'border-slate-600 text-slate-200 hover:bg-slate-800'
+                  : 'border-slate-300 text-slate-700 hover:bg-slate-100',
+              ].join(' ')}
+            >
+              我的订单
+            </a>
+          </>
+        ) : undefined
+      }
     >
-      {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
       {step === 'form' && isMobile && (
         <div
@@ -354,10 +356,12 @@ function PayContent() {
             className={[
               'rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200',
               activeMobileTab === 'pay'
-                ? (isDark
+                ? isDark
                   ? 'bg-indigo-500/30 text-indigo-100 ring-1 ring-indigo-300/35 shadow-sm'
-                  : 'bg-white text-slate-900 ring-1 ring-slate-300 shadow-md shadow-slate-300/50')
-                : (isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'),
+                  : 'bg-white text-slate-900 ring-1 ring-slate-300 shadow-md shadow-slate-300/50'
+                : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-500 hover:text-slate-700',
             ].join(' ')}
           >
             充值
@@ -368,10 +372,12 @@ function PayContent() {
             className={[
               'rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200',
               activeMobileTab === 'orders'
-                ? (isDark
+                ? isDark
                   ? 'bg-indigo-500/30 text-indigo-100 ring-1 ring-indigo-300/35 shadow-sm'
-                  : 'bg-white text-slate-900 ring-1 ring-slate-300 shadow-md shadow-slate-300/50')
-                : (isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'),
+                  : 'bg-white text-slate-900 ring-1 ring-slate-300 shadow-md shadow-slate-300/50'
+                : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-500 hover:text-slate-700',
             ].join(' ')}
           >
             我的订单
@@ -382,9 +388,7 @@ function PayContent() {
       {step === 'form' && config.enabledPaymentTypes.length === 0 && (
         <div className="flex items-center justify-center py-12">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-          <span className={['ml-3 text-sm', isDark ? 'text-slate-400' : 'text-gray-500'].join(' ')}>
-            加载中...
-          </span>
+          <span className={['ml-3 text-sm', isDark ? 'text-slate-400' : 'text-gray-500'].join(' ')}>加载中...</span>
         </div>
       )}
 
@@ -432,31 +436,46 @@ function PayContent() {
                 />
               </div>
               <div className="space-y-4">
-                <div className={['rounded-2xl border p-4', isDark ? 'border-slate-700 bg-slate-800/70' : 'border-slate-200 bg-slate-50'].join(' ')}>
+                <div
+                  className={[
+                    'rounded-2xl border p-4',
+                    isDark ? 'border-slate-700 bg-slate-800/70' : 'border-slate-200 bg-slate-50',
+                  ].join(' ')}
+                >
                   <div className={['text-xs', isDark ? 'text-slate-400' : 'text-slate-500'].join(' ')}>支付说明</div>
                   <ul className={['mt-2 space-y-1 text-sm', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
                     <li>订单完成后会自动到账</li>
-                    <li>如需历史记录请查看"我的订单"</li>
-                    {config.maxDailyAmount > 0 && (
-                      <li>每日最大充值 ¥{config.maxDailyAmount.toFixed(2)}</li>
+                    <li>如需历史记录请查看「我的订单」</li>
+                    {config.maxDailyAmount > 0 && <li>每日最大充值 ¥{config.maxDailyAmount.toFixed(2)}</li>}
+                    {!hasToken && (
+                      <li className={isDark ? 'text-amber-200' : 'text-amber-700'}>当前链接无 token，订单查询受限</li>
                     )}
-                    {!hasToken && <li className={isDark ? 'text-amber-200' : 'text-amber-700'}>当前链接无 token，订单查询受限</li>}
                   </ul>
                 </div>
 
                 {hasHelpContent && (
-                  <div className={['rounded-2xl border p-4', isDark ? 'border-slate-700 bg-slate-800/70' : 'border-slate-200 bg-slate-50'].join(' ')}>
+                  <div
+                    className={[
+                      'rounded-2xl border p-4',
+                      isDark ? 'border-slate-700 bg-slate-800/70' : 'border-slate-200 bg-slate-50',
+                    ].join(' ')}
+                  >
                     <div className={['text-xs', isDark ? 'text-slate-400' : 'text-slate-500'].join(' ')}>Support</div>
                     {helpImageUrl && (
                       <img
                         src={helpImageUrl}
-                        alt='help'
+                        alt="help"
                         onClick={() => setHelpImageOpen(true)}
-                        className='mt-3 max-h-40 w-full cursor-zoom-in rounded-lg object-contain bg-white/70 p-2'
+                        className="mt-3 max-h-40 w-full cursor-zoom-in rounded-lg object-contain bg-white/70 p-2"
                       />
                     )}
                     {helpText && (
-                      <div className={['mt-3 space-y-1 text-sm leading-6', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
+                      <div
+                        className={[
+                          'mt-3 space-y-1 text-sm leading-6',
+                          isDark ? 'text-slate-300' : 'text-slate-600',
+                        ].join(' ')}
+                      >
                         {helpText.split('\\n').map((line, i) => (
                           <p key={i}>{line}</p>
                         ))}
@@ -490,9 +509,7 @@ function PayContent() {
         />
       )}
 
-      {step === 'result' && (
-        <OrderStatus status={finalStatus} onBack={handleBack} dark={isDark} />
-      )}
+      {step === 'result' && <OrderStatus status={finalStatus} onBack={handleBack} dark={isDark} />}
 
       {helpImageOpen && helpImageUrl && (
         <div
@@ -501,8 +518,8 @@ function PayContent() {
         >
           <img
             src={helpImageUrl}
-            alt='help'
-            className='max-h-[90vh] max-w-full rounded-xl object-contain shadow-2xl'
+            alt="help"
+            className="max-h-[90vh] max-w-full rounded-xl object-contain shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

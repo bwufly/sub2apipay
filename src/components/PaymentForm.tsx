@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { PAYMENT_TYPE_META } from '@/lib/pay-utils';
 
 export interface MethodLimitInfo {
@@ -49,11 +49,9 @@ export default function PaymentForm({
   const [customAmount, setCustomAmount] = useState('');
 
   // Reset paymentType when enabledPaymentTypes changes (e.g. after config loads)
-  useEffect(() => {
-    if (!enabledPaymentTypes.includes(paymentType)) {
-      setPaymentType(enabledPaymentTypes[0] || 'stripe');
-    }
-  }, [enabledPaymentTypes, paymentType]);
+  const effectivePaymentType = enabledPaymentTypes.includes(paymentType)
+    ? paymentType
+    : enabledPaymentTypes[0] || 'stripe';
 
   const handleQuickAmount = (val: number) => {
     setAmount(val);
@@ -81,22 +79,23 @@ export default function PaymentForm({
   };
 
   const selectedAmount = amount || 0;
-  const isMethodAvailable = !methodLimits || (methodLimits[paymentType]?.available !== false);
-  const methodSingleMax = methodLimits?.[paymentType]?.singleMax;
-  const effectiveMax = (methodSingleMax !== undefined && methodSingleMax > 0) ? methodSingleMax : maxAmount;
-  const feeRate = methodLimits?.[paymentType]?.feeRate ?? 0;
-  const feeAmount = feeRate > 0 && selectedAmount > 0
-    ? Math.ceil(selectedAmount * feeRate / 100 * 100) / 100
-    : 0;
-  const payAmount = feeRate > 0 && selectedAmount > 0
-    ? Math.round((selectedAmount + feeAmount) * 100) / 100
-    : selectedAmount;
-  const isValid = selectedAmount >= minAmount && selectedAmount <= effectiveMax && hasValidCentPrecision(selectedAmount) && isMethodAvailable;
+  const isMethodAvailable = !methodLimits || methodLimits[effectivePaymentType]?.available !== false;
+  const methodSingleMax = methodLimits?.[effectivePaymentType]?.singleMax;
+  const effectiveMax = methodSingleMax !== undefined && methodSingleMax > 0 ? methodSingleMax : maxAmount;
+  const feeRate = methodLimits?.[effectivePaymentType]?.feeRate ?? 0;
+  const feeAmount = feeRate > 0 && selectedAmount > 0 ? Math.ceil(((selectedAmount * feeRate) / 100) * 100) / 100 : 0;
+  const payAmount =
+    feeRate > 0 && selectedAmount > 0 ? Math.round((selectedAmount + feeAmount) * 100) / 100 : selectedAmount;
+  const isValid =
+    selectedAmount >= minAmount &&
+    selectedAmount <= effectiveMax &&
+    hasValidCentPrecision(selectedAmount) &&
+    isMethodAvailable;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid || loading) return;
-    await onSubmit(selectedAmount, paymentType);
+    await onSubmit(selectedAmount, effectivePaymentType);
   };
 
   const renderPaymentIcon = (type: string) => {
@@ -215,19 +214,17 @@ export default function PaymentForm({
         </div>
       </div>
 
-      {customAmount !== '' && !isValid && (() => {
-        const num = parseFloat(customAmount);
-        let msg = '金额需在范围内，且最多支持 2 位小数（精确到分）';
-        if (!isNaN(num)) {
-          if (num < minAmount) msg = `单笔最低充值 ¥${minAmount}`;
-          else if (num > effectiveMax) msg = `单笔最高充值 ¥${effectiveMax}`;
-        }
-        return (
-          <div className={['text-xs', dark ? 'text-amber-300' : 'text-amber-700'].join(' ')}>
-            {msg}
-          </div>
-        );
-      })()}
+      {customAmount !== '' &&
+        !isValid &&
+        (() => {
+          const num = parseFloat(customAmount);
+          let msg = '金额需在范围内，且最多支持 2 位小数（精确到分）';
+          if (!isNaN(num)) {
+            if (num < minAmount) msg = `单笔最低充值 ¥${minAmount}`;
+            else if (num > effectiveMax) msg = `单笔最高充值 ¥${effectiveMax}`;
+          }
+          return <div className={['text-xs', dark ? 'text-amber-300' : 'text-amber-700'].join(' ')}>{msg}</div>;
+        })()}
 
       {/* Payment Type — only show when multiple types available */}
       {enabledPaymentTypes.length > 1 && (
@@ -238,7 +235,7 @@ export default function PaymentForm({
           <div className="flex gap-3">
             {enabledPaymentTypes.map((type) => {
               const meta = PAYMENT_TYPE_META[type];
-              const isSelected = paymentType === type;
+              const isSelected = effectivePaymentType === type;
               const limitInfo = methodLimits?.[type];
               const isUnavailable = limitInfo !== undefined && !limitInfo.available;
 
@@ -284,7 +281,7 @@ export default function PaymentForm({
 
           {/* 当前选中渠道额度不足时的提示 */}
           {(() => {
-            const limitInfo = methodLimits?.[paymentType];
+            const limitInfo = methodLimits?.[effectivePaymentType];
             if (!limitInfo || limitInfo.available) return null;
             return (
               <p className={['mt-2 text-xs', dark ? 'text-amber-300' : 'text-amber-600'].join(' ')}>
@@ -311,10 +308,12 @@ export default function PaymentForm({
             <span>手续费（{feeRate}%）</span>
             <span>¥{feeAmount.toFixed(2)}</span>
           </div>
-          <div className={[
-            'flex items-center justify-between mt-1.5 pt-1.5 border-t font-medium',
-            dark ? 'border-slate-700 text-slate-100' : 'border-slate-200 text-slate-900',
-          ].join(' ')}>
+          <div
+            className={[
+              'flex items-center justify-between mt-1.5 pt-1.5 border-t font-medium',
+              dark ? 'border-slate-700 text-slate-100' : 'border-slate-200 text-slate-900',
+            ].join(' ')}
+          >
             <span>实付金额</span>
             <span>¥{payAmount.toFixed(2)}</span>
           </div>
@@ -327,7 +326,7 @@ export default function PaymentForm({
         disabled={!isValid || loading}
         className={`w-full rounded-lg py-3 text-center font-medium text-white transition-colors ${
           isValid && !loading
-            ? paymentType === 'stripe'
+            ? effectivePaymentType === 'stripe'
               ? 'bg-[#635bff] hover:bg-[#5851db] active:bg-[#4b44c7]'
               : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
             : dark
@@ -335,7 +334,9 @@ export default function PaymentForm({
               : 'cursor-not-allowed bg-gray-300'
         }`}
       >
-        {loading ? '处理中...' : `立即充值 ¥${(feeRate > 0 && selectedAmount > 0 ? payAmount : selectedAmount || 0).toFixed(2)}`}
+        {loading
+          ? '处理中...'
+          : `立即充值 ¥${(feeRate > 0 && selectedAmount > 0 ? payAmount : selectedAmount || 0).toFixed(2)}`}
       </button>
     </form>
   );
