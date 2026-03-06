@@ -46,14 +46,5 @@ export function initPaymentProviders(): void {
     paymentRegistry.register(new StripeProvider());
   }
 
-  // 校验 ENABLED_PAYMENT_TYPES 的每个渠道都有对应 provider 已注册
-  const unsupported = env.ENABLED_PAYMENT_TYPES.filter((t) => !paymentRegistry.hasProvider(t as PaymentType));
-  if (unsupported.length > 0) {
-    throw new Error(
-      `ENABLED_PAYMENT_TYPES 含 [${unsupported.join(', ')}]，但没有对应的 PAYMENT_PROVIDERS 注册。` +
-        `请检查 PAYMENT_PROVIDERS 配置`,
-    );
-  }
-
   initialized = true;
 }

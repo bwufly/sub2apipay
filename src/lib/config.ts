@@ -47,13 +47,6 @@ const envSchema = z.object({
   STRIPE_PUBLISHABLE_KEY: optionalTrimmedString,
   STRIPE_WEBHOOK_SECRET: optionalTrimmedString,
 
-  // ── 启用的支付渠道（在已配置服务商支持的渠道中选择） ──
-  // 易支付支持: alipay, wxpay；Stripe 支持: stripe
-  ENABLED_PAYMENT_TYPES: z
-    .string()
-    .default('alipay,wxpay')
-    .transform((v) => v.split(',').map((s) => s.trim())),
-
   ORDER_TIMEOUT_MINUTES: z.string().default('5').transform(Number).pipe(z.number().int().positive()),
   MIN_RECHARGE_AMOUNT: z.string().default('1').transform(Number).pipe(z.number().positive()),
   MAX_RECHARGE_AMOUNT: z.string().default('1000').transform(Number).pipe(z.number().positive()),

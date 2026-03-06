@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createOrder, OrderError } from '@/lib/order/service';
 import { getEnv } from '@/lib/config';
+import { initPaymentProviders, paymentRegistry } from '@/lib/payment';
 
 const createOrderSchema = z.object({
   user_id: z.number().int().positive(),
@@ -14,6 +15,7 @@ const createOrderSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const env = getEnv();
+    initPaymentProviders();
     const body = await request.json();
     const parsed = createOrderSchema.safeParse(body);
 
@@ -32,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate payment type is enabled
-    if (!env.ENABLED_PAYMENT_TYPES.includes(payment_type)) {
+    if (!paymentRegistry.getSupportedTypes().includes(payment_type)) {
       return NextResponse.json({ error: `不支持的支付方式: ${payment_type}` }, { status: 400 });
     }
 

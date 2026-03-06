@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getEnv } from '@/lib/config';
 import { queryMethodLimits } from '@/lib/order/limits';
+import { initPaymentProviders, paymentRegistry } from '@/lib/payment';
 
 /**
  * GET /api/limits
@@ -17,8 +17,8 @@ import { queryMethodLimits } from '@/lib/order/limits';
  * }
  */
 export async function GET() {
-  const env = getEnv();
-  const types = env.ENABLED_PAYMENT_TYPES;
+  initPaymentProviders();
+  const types = paymentRegistry.getSupportedTypes();
 
   const todayStart = new Date();
   todayStart.setUTCHours(0, 0, 0, 0);

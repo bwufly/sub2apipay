@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUser } from '@/lib/sub2api/client';
 import { getEnv } from '@/lib/config';
 import { queryMethodLimits } from '@/lib/order/limits';
+import { initPaymentProviders, paymentRegistry } from '@/lib/payment';
 
 export async function GET(request: NextRequest) {
   const userId = Number(request.nextUrl.searchParams.get('user_id'));
@@ -11,7 +12,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const env = getEnv();
-    const [user, methodLimits] = await Promise.all([getUser(userId), queryMethodLimits(env.ENABLED_PAYMENT_TYPES)]);
+    initPaymentProviders();
+    const enabledTypes = paymentRegistry.getSupportedTypes();
+    const [user, methodLimits] = await Promise.all([getUser(userId), queryMethodLimits(enabledTypes)]);
 
     // 收集 sublabel 覆盖（仅包含用户实际配置的项）
     const sublabelOverrides: Record<string, string> = {};
@@ -27,7 +30,7 @@ export async function GET(request: NextRequest) {
         status: user.status,
       },
       config: {
-        enabledPaymentTypes: env.ENABLED_PAYMENT_TYPES,
+        enabledPaymentTypes: enabledTypes,
         minAmount: env.MIN_RECHARGE_AMOUNT,
         maxAmount: env.MAX_RECHARGE_AMOUNT,
         maxDailyAmount: env.MAX_DAILY_RECHARGE_AMOUNT,
@@ -35,7 +38,7 @@ export async function GET(request: NextRequest) {
         helpImageUrl: env.PAY_HELP_IMAGE_URL ?? null,
         helpText: env.PAY_HELP_TEXT ?? null,
         stripePublishableKey:
-          env.ENABLED_PAYMENT_TYPES.includes('stripe') && env.STRIPE_PUBLISHABLE_KEY
+          enabledTypes.includes('stripe') && env.STRIPE_PUBLISHABLE_KEY
             ? env.STRIPE_PUBLISHABLE_KEY
             : null,
         sublabelOverrides: Object.keys(sublabelOverrides).length > 0 ? sublabelOverrides : null,
