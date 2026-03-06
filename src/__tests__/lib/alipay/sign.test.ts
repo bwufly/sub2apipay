@@ -44,16 +44,16 @@ describe('Alipay RSA2 Sign', () => {
       expect(sign1).toBe(sign2);
     });
 
-    it('should filter out sign field but keep sign_type', () => {
+    it('should filter out sign and sign_type fields', () => {
       const paramsWithSign = { ...testParams, sign: 'old_sign' };
       const sign1 = generateSign(testParams, privateKey);
       const sign2 = generateSign(paramsWithSign, privateKey);
       expect(sign1).toBe(sign2);
 
-      // sign_type should be included in signing
+      // sign_type should also be excluded from signing (per Alipay spec)
       const paramsWithSignType = { ...testParams, sign_type: 'RSA2' };
       const sign3 = generateSign(paramsWithSignType, privateKey);
-      expect(sign3).not.toBe(sign1);
+      expect(sign3).toBe(sign1);
     });
 
     it('should filter out empty values', () => {

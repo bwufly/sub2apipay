@@ -174,6 +174,7 @@ describe('AlipayProvider', () => {
         total_amount: '50.00',
         sign: 'test_sign',
         sign_type: 'RSA2',
+        app_id: '2021000000000000',
       }).toString();
 
       const result = await provider.verifyNotification(body, {});
@@ -190,6 +191,7 @@ describe('AlipayProvider', () => {
         total_amount: '30.00',
         sign: 'test_sign',
         sign_type: 'RSA2',
+        app_id: '2021000000000000',
       }).toString();
 
       const result = await provider.verifyNotification(body, {});
@@ -237,6 +239,7 @@ describe('AlipayProvider', () => {
         out_trade_no: 'order-001',
         refund_amount: '100.00',
         refund_reason: 'customer request',
+        out_request_no: 'order-001-refund',
       });
     });
 

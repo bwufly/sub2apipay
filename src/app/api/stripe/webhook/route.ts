@@ -19,8 +19,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Unknown event type — acknowledge receipt
       return NextResponse.json({ received: true });
     }
-    await handlePaymentNotify(notification, provider.name);
+    const success = await handlePaymentNotify(notification, provider.name);
 
+    if (!success) {
+      // 处理失败（充值未完成等），返回 500 让 Stripe 重试
+      return NextResponse.json({ error: 'Processing failed, will retry' }, { status: 500 });
+    }
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Stripe webhook error:', error);

@@ -3,6 +3,12 @@ import crypto from 'crypto';
 import { getEnv } from '@/lib/config';
 import type { WxpayPcOrderParams, WxpayH5OrderParams, WxpayRefundParams } from './types';
 
+/** 自动补全 PEM 格式（公钥） */
+function formatPublicKey(key: string): string {
+  if (key.includes('-----BEGIN')) return key;
+  return `-----BEGIN PUBLIC KEY-----\n${key}\n-----END PUBLIC KEY-----`;
+}
+
 const BASE_URL = 'https://api.mch.weixin.qq.com';
 
 function assertWxpayEnv(env: ReturnType<typeof getEnv>) {
@@ -29,7 +35,7 @@ function getPayInstance(): WxPay {
   if (!env.WXPAY_PUBLIC_KEY) {
     throw new Error('WXPAY_PUBLIC_KEY is required');
   }
-  const publicKey = Buffer.from(env.WXPAY_PUBLIC_KEY);
+  const publicKey = Buffer.from(formatPublicKey(env.WXPAY_PUBLIC_KEY));
 
   payInstance = new WxPay({
     appid: env.WXPAY_APP_ID,
@@ -166,5 +172,5 @@ export async function verifyNotifySign(params: {
   const message = `${params.timestamp}\n${params.nonce}\n${params.body}\n`;
   const verify = crypto.createVerify('RSA-SHA256');
   verify.update(message);
-  return verify.verify(env.WXPAY_PUBLIC_KEY, params.signature, 'base64');
+  return verify.verify(formatPublicKey(env.WXPAY_PUBLIC_KEY), params.signature, 'base64');
 }
