@@ -55,6 +55,7 @@ export interface CreateOrderResult {
   userBalance: number;
   payUrl?: string | null;
   qrCode?: string | null;
+  qrCodeImg?: string | null;
   clientSecret?: string | null;
   expiresAt: Date;
   statusAccessToken: string;
@@ -306,6 +307,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         paymentTradeNo: paymentResult.tradeNo,
         payUrl: paymentResult.payUrl || null,
         qrCode: paymentResult.qrCode || null,
+        qrCodeImg: paymentResult.qrCodeImg || null,
       },
     });
 
@@ -339,6 +341,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       userBalance: user.balance,
       payUrl: paymentResult.payUrl,
       qrCode: paymentResult.qrCode,
+      qrCodeImg: paymentResult.qrCodeImg,
       clientSecret: paymentResult.clientSecret,
       expiresAt,
       statusAccessToken,

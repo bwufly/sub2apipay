@@ -29,6 +29,7 @@ interface OrderResult {
   paymentType: string;
   payUrl?: string | null;
   qrCode?: string | null;
+  qrCodeImg?: string | null;
   clientSecret?: string | null;
   expiresAt: string;
   statusAccessToken: string;
@@ -413,6 +414,7 @@ function PayContent() {
         paymentType: data.paymentType || paymentType,
         payUrl: data.payUrl,
         qrCode: data.qrCode,
+        qrCodeImg: data.qrCodeImg,
         clientSecret: data.clientSecret,
         expiresAt: data.expiresAt,
         statusAccessToken: data.statusAccessToken,
@@ -461,6 +463,7 @@ function PayContent() {
         paymentType: data.paymentType || paymentType,
         payUrl: data.payUrl,
         qrCode: data.qrCode,
+        qrCodeImg: data.qrCodeImg,
         clientSecret: data.clientSecret,
         expiresAt: data.expiresAt,
         statusAccessToken: data.statusAccessToken,
@@ -1031,6 +1034,7 @@ function PayContent() {
             token={token || undefined}
             payUrl={orderResult.payUrl}
             qrCode={orderResult.qrCode}
+            qrCodeImg={orderResult.qrCodeImg}
             clientSecret={orderResult.clientSecret}
             stripePublishableKey={config.stripePublishableKey}
             paymentType={orderResult.paymentType}

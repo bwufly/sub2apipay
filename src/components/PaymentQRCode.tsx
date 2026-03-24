@@ -13,6 +13,7 @@ interface PaymentQRCodeProps {
   token?: string;
   payUrl?: string | null;
   qrCode?: string | null;
+  qrCodeImg?: string | null;
   clientSecret?: string | null;
   stripePublishableKey?: string | null;
   paymentType?: string;
@@ -37,6 +38,7 @@ export default function PaymentQRCode({
   token,
   payUrl,
   qrCode,
+  qrCodeImg,
   clientSecret,
   stripePublishableKey,
   paymentType,
@@ -119,7 +121,7 @@ export default function PaymentQRCode({
     openScanSuffix: locale === 'en' ? ' and scan to complete payment' : '扫一扫完成支付',
   };
 
-  const shouldAutoRedirect = !expired && !isStripeType(paymentType) && !!payUrl && (isMobile || !qrCode);
+  const shouldAutoRedirect = !expired && !isStripeType(paymentType) && !!payUrl && (isMobile || (!qrCode && !qrCodeImg));
 
   useEffect(() => {
     if (!shouldAutoRedirect || redirected) return;
@@ -545,7 +547,7 @@ export default function PaymentQRCode({
             </>
           ) : (
             <>
-              {qrDataUrl && (
+              {(qrCodeImg || qrDataUrl) && (
                 <div
                   className={[
                     'relative rounded-lg border p-4',
@@ -557,7 +559,7 @@ export default function PaymentQRCode({
                       <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
                     </div>
                   )}
-                  <img src={qrDataUrl} alt="payment qrcode" className="h-56 w-56 rounded" />
+                  <img src={qrCodeImg || qrDataUrl} alt="payment qrcode" className="h-56 w-56 rounded object-contain" />
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                     <span className={`rounded-full p-2 shadow ring-2 ring-white ${iconBgClass}`}>
                       <img src={iconSrc} alt={channelLabel} className="h-5 w-5 brightness-0 invert" />
@@ -566,7 +568,7 @@ export default function PaymentQRCode({
                 </div>
               )}
 
-              {!qrDataUrl && (
+              {!qrCodeImg && !qrDataUrl && (
                 <div className="text-center">
                   <div
                     className={[

@@ -79,7 +79,7 @@ export class XunhuPayProvider implements PaymentProvider {
     return {
       tradeNo: request.orderId,
       payUrl: result.url,
-      qrCode: result.url_qrcode,
+      qrCodeImg: result.url_qrcode,
     };
   }
 
