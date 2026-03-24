@@ -83,6 +83,15 @@ export async function POST(request: NextRequest) {
 
     // 不向客户端暴露 userName / userBalance 等隐私字段
     const { userName: _u, userBalance: _b, ...safeResult } = result;
+    if (env.DEBUG_PAYMENT_FLOW) {
+      console.log('[payment-flow] /api/orders response', {
+        orderId: safeResult.orderId,
+        paymentType: safeResult.paymentType,
+        payUrl: safeResult.payUrl ?? null,
+        qrCode: safeResult.qrCode ?? null,
+        qrCodeImg: safeResult.qrCodeImg ?? null,
+      });
+    }
     return NextResponse.json(safeResult);
   } catch (error) {
     return handleApiError(error, '创建订单失败，请稍后重试');

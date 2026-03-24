@@ -47,6 +47,12 @@ function assertXunhuPayEnv(env: ReturnType<typeof getEnv>) {
   };
 }
 
+function logXunhuPayDebug(message: string, payload: Record<string, unknown>) {
+  const env = getEnv();
+  if (!env.DEBUG_PAYMENT_FLOW) return;
+  console.log(`[xunhupay] ${message}`, payload);
+}
+
 function generateNonce(): string {
   return crypto.randomBytes(16).toString('hex');
 }
@@ -116,6 +122,13 @@ export async function createPayment(opts: CreateXunhuPayPaymentOptions): Promise
   );
 
   const response = await postForm<XunhuPayCreateResponse>(`${env.XUNHU_PAY_API_BASE}/payment/do.html`, payload);
+  logXunhuPayDebug('create payment response', {
+    tradeOrderId: opts.tradeOrderId,
+    errcode: response.errcode,
+    errmsg: response.errmsg,
+    url: response.url,
+    url_qrcode: response.url_qrcode,
+  });
   verifyFlatResponseHash(response, env.XUNHU_PAY_APP_SECRET, 'create payment');
   assertSuccess(response.errcode, response.errmsg, 'create payment');
   return response;

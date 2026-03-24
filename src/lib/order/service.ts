@@ -301,6 +301,18 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       isMobile: input.isMobile,
     });
 
+    if (env.DEBUG_PAYMENT_FLOW) {
+      console.log('[payment-flow] provider.createPayment result', {
+        orderId: order.id,
+        paymentType: input.paymentType,
+        providerKey: provider.providerKey,
+        isMobile: input.isMobile,
+        payUrl: paymentResult.payUrl || null,
+        qrCode: paymentResult.qrCode || null,
+        qrCodeImg: paymentResult.qrCodeImg || null,
+      });
+    }
+
     await prisma.order.update({
       where: { id: order.id },
       data: {

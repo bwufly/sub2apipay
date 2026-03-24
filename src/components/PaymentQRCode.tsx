@@ -121,7 +121,13 @@ export default function PaymentQRCode({
     openScanSuffix: locale === 'en' ? ' and scan to complete payment' : '扫一扫完成支付',
   };
 
-  const shouldAutoRedirect = !expired && !isStripeType(paymentType) && !!payUrl && (isMobile || (!qrCode && !qrCodeImg));
+  const hostedQrImageOnly = paymentType === 'xunhupay';
+  const qrPayload = useMemo(() => {
+    if (hostedQrImageOnly) return '';
+    return (qrCode || '').trim();
+  }, [hostedQrImageOnly, qrCode]);
+  const hasDisplayQr = Boolean(qrCodeImg || qrPayload);
+  const shouldAutoRedirect = !expired && !isStripeType(paymentType) && !!payUrl && (isMobile || !hasDisplayQr);
 
   useEffect(() => {
     if (!shouldAutoRedirect || redirected) return;
@@ -132,10 +138,6 @@ export default function PaymentQRCode({
       window.location.replace(payUrl!);
     }
   }, [shouldAutoRedirect, redirected, payUrl, isEmbedded]);
-
-  const qrPayload = useMemo(() => {
-    return (qrCode || '').trim();
-  }, [qrCode]);
 
   useEffect(() => {
     let cancelled = false;

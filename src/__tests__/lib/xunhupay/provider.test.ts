@@ -45,11 +45,11 @@ describe('XunhuPayProvider', () => {
     });
   });
 
-  it('maps create payment response to payUrl and qrCode', async () => {
+  it('maps create payment response to payUrl and qrCodeImg', async () => {
     mockCreatePayment.mockResolvedValue({
       errcode: 0,
       url: 'https://cashier.xunhupay.com/pay/order-001',
-      url_qrcode: 'weixin://wxpay/bizpayurl?pr=abc123',
+      url_qrcode: 'https://cashier.xunhupay.com/qrcode/order-001.png',
     });
 
     const request: CreatePaymentRequest = {
@@ -74,7 +74,7 @@ describe('XunhuPayProvider', () => {
     expect(result).toEqual({
       tradeNo: 'order-001',
       payUrl: 'https://cashier.xunhupay.com/pay/order-001',
-      qrCode: 'weixin://wxpay/bizpayurl?pr=abc123',
+      qrCodeImg: 'https://cashier.xunhupay.com/qrcode/order-001.png',
     });
   });
 

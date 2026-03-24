@@ -99,9 +99,12 @@ function shouldAutoRedirect(opts: {
   paymentType?: string;
   payUrl?: string | null;
   qrCode?: string | null;
+  qrCodeImg?: string | null;
   isMobile: boolean;
 }): boolean {
-  return !opts.expired && !isStripeType(opts.paymentType) && !!opts.payUrl && (opts.isMobile || !opts.qrCode);
+  const hostedQrImageOnly = opts.paymentType === 'xunhupay';
+  const hasDisplayQr = hostedQrImageOnly ? !!opts.qrCodeImg : !!opts.qrCode || !!opts.qrCodeImg;
+  return !opts.expired && !isStripeType(opts.paymentType) && !!opts.payUrl && (opts.isMobile || !hasDisplayQr);
 }
 
 // ============================================================
@@ -220,6 +223,34 @@ describe('Payment Flow - PC/Mobile, QR/Redirect', () => {
           isMobile: true,
         }),
       );
+    });
+  });
+
+  describe('XunhuPay QR handling', () => {
+    it('PC: ignores legacy qrCode payload and redirects when hosted qr image is missing', () => {
+      expect(
+        shouldAutoRedirect({
+          expired: false,
+          paymentType: 'xunhupay',
+          payUrl: 'https://cashier.xunhupay.com/pay/order-001',
+          qrCode: 'https://cashier.xunhupay.com/pay/order-001',
+          qrCodeImg: undefined,
+          isMobile: false,
+        }),
+      ).toBe(true);
+    });
+
+    it('PC: keeps current page when hosted qr image exists', () => {
+      expect(
+        shouldAutoRedirect({
+          expired: false,
+          paymentType: 'xunhupay',
+          payUrl: 'https://cashier.xunhupay.com/pay/order-001',
+          qrCode: 'https://cashier.xunhupay.com/pay/order-001',
+          qrCodeImg: 'https://cashier.xunhupay.com/qrcode/order-001.png',
+          isMobile: false,
+        }),
+      ).toBe(false);
     });
   });
 
