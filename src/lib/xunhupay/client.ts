@@ -58,7 +58,7 @@ function withSignedHash<T extends object>(params: T, appSecret: string): T & { h
   };
 }
 
-function toFormBody(body: Record<string, unknown>): URLSearchParams {
+function toFormBody(body: object): URLSearchParams {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(body)) {
     if (value === undefined || value === null || value === '') continue;
@@ -67,7 +67,7 @@ function toFormBody(body: Record<string, unknown>): URLSearchParams {
   return params;
 }
 
-async function postForm<T extends Record<string, unknown>>(url: string, body: Record<string, unknown>): Promise<T> {
+async function postForm<T extends Record<string, unknown>>(url: string, body: object): Promise<T> {
   const response = await fetch(url, {
     method: 'POST',
     body: toFormBody(body),
