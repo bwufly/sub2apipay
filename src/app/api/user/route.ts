@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
     if (env.PAYMENT_SUBLABEL_ALIPAY_DIRECT) sublabelOverrides.alipay_direct = env.PAYMENT_SUBLABEL_ALIPAY_DIRECT;
     if (env.PAYMENT_SUBLABEL_WXPAY) sublabelOverrides.wxpay = env.PAYMENT_SUBLABEL_WXPAY;
     if (env.PAYMENT_SUBLABEL_WXPAY_DIRECT) sublabelOverrides.wxpay_direct = env.PAYMENT_SUBLABEL_WXPAY_DIRECT;
+    if (env.PAYMENT_SUBLABEL_XUNHUPAY) sublabelOverrides.xunhupay = env.PAYMENT_SUBLABEL_XUNHUPAY;
     if (env.PAYMENT_SUBLABEL_STRIPE) sublabelOverrides.stripe = env.PAYMENT_SUBLABEL_STRIPE;
 
     return NextResponse.json({

@@ -37,6 +37,7 @@ export const PAYMENT_TYPE = {
   ALIPAY_DIRECT: 'alipay_direct',
   WXPAY: 'wxpay',
   WXPAY_DIRECT: 'wxpay_direct',
+  XUNHUPAY: 'xunhupay',
   STRIPE: 'stripe',
 } as const;
 
@@ -44,6 +45,7 @@ export const PAYMENT_TYPE = {
 export const PAYMENT_PREFIX = {
   ALIPAY: 'alipay',
   WXPAY: 'wxpay',
+  XUNHUPAY: 'xunhupay',
   STRIPE: 'stripe',
 } as const;
 

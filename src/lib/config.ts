@@ -13,7 +13,7 @@ const envSchema = z.object({
   SUB2API_BASE_URL: z.string().url(),
   SUB2API_ADMIN_API_KEY: z.string().min(1),
 
-  // ── 支付服务商（显式声明启用哪些服务商，逗号分隔：easypay, alipay, wxpay, stripe） ──
+  // ── 支付服务商（显式声明启用哪些服务商，逗号分隔：easypay, alipay, wxpay, stripe, xunhupay） ──
   PAYMENT_PROVIDERS: z
     .string()
     .default('')
@@ -57,6 +57,13 @@ const envSchema = z.object({
   STRIPE_PUBLISHABLE_KEY: optionalTrimmedString,
   STRIPE_WEBHOOK_SECRET: optionalTrimmedString,
 
+  // ── 虎皮椒（PAYMENT_PROVIDERS 含 xunhupay 时必填） ──
+  XUNHU_PAY_APP_ID: optionalTrimmedString,
+  XUNHU_PAY_APP_SECRET: optionalTrimmedString,
+  XUNHU_PAY_API_BASE: optionalTrimmedString,
+  XUNHU_PAY_NOTIFY_URL: optionalTrimmedString,
+  XUNHU_PAY_RETURN_URL: optionalTrimmedString,
+
   ORDER_TIMEOUT_MINUTES: z.string().default('5').transform(Number).pipe(z.number().int().positive()),
   MIN_RECHARGE_AMOUNT: z.string().default('1').transform(Number).pipe(z.number().positive()),
   MAX_RECHARGE_AMOUNT: z.string().default('1000').transform(Number).pipe(z.number().positive()),
@@ -80,6 +87,11 @@ const envSchema = z.object({
     .optional()
     .transform((v) => (v !== undefined ? Number(v) : undefined))
     .pipe(z.number().min(0).optional()),
+  MAX_DAILY_AMOUNT_XUNHUPAY: z
+    .string()
+    .optional()
+    .transform((v) => (v !== undefined ? Number(v) : undefined))
+    .pipe(z.number().min(0).optional()),
   MAX_DAILY_AMOUNT_STRIPE: z
     .string()
     .optional()
@@ -98,6 +110,7 @@ const envSchema = z.object({
   PAYMENT_SUBLABEL_ALIPAY_DIRECT: optionalTrimmedString,
   PAYMENT_SUBLABEL_WXPAY: optionalTrimmedString,
   PAYMENT_SUBLABEL_WXPAY_DIRECT: optionalTrimmedString,
+  PAYMENT_SUBLABEL_XUNHUPAY: optionalTrimmedString,
   PAYMENT_SUBLABEL_STRIPE: optionalTrimmedString,
 });
 

@@ -4,6 +4,7 @@ import { EasyPayProvider } from '@/lib/easy-pay/provider';
 import { StripeProvider } from '@/lib/stripe/provider';
 import { AlipayProvider } from '@/lib/alipay/provider';
 import { WxpayProvider } from '@/lib/wxpay/provider';
+import { XunhuPayProvider } from '@/lib/xunhupay/provider';
 import { getEnv } from '@/lib/config';
 
 export { paymentRegistry } from './registry';
@@ -65,6 +66,15 @@ export function initPaymentProviders(): void {
       throw new Error('PAYMENT_PROVIDERS 含 stripe，但缺少 STRIPE_SECRET_KEY');
     }
     paymentRegistry.register(new StripeProvider());
+  }
+
+  if (providers.includes('xunhupay')) {
+    if (!env.XUNHU_PAY_APP_ID || !env.XUNHU_PAY_APP_SECRET || !env.XUNHU_PAY_NOTIFY_URL) {
+      throw new Error(
+        'PAYMENT_PROVIDERS 含 xunhupay，但缺少 XUNHU_PAY_APP_ID、XUNHU_PAY_APP_SECRET 或 XUNHU_PAY_NOTIFY_URL',
+      );
+    }
+    paymentRegistry.register(new XunhuPayProvider());
   }
 
   initialized = true;

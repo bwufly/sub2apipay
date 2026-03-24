@@ -153,6 +153,18 @@ export const PAYMENT_TYPE_META: Record<string, PaymentTypeMeta> = {
     chartBar: { light: 'bg-emerald-500', dark: 'bg-emerald-400' },
     buttonClass: 'bg-[#07C160] hover:bg-[#06ad56] active:bg-[#05994c]',
   },
+  [PAYMENT_TYPE.XUNHUPAY]: {
+    label: '微信支付',
+    provider: '虎皮椒',
+    color: '#07C160',
+    selectedBorder: 'border-green-600',
+    selectedBg: 'bg-green-50',
+    selectedBgDark: 'bg-green-950',
+    iconBg: 'bg-[#07C160]',
+    iconSrc: '/icons/wxpay.svg',
+    chartBar: { light: 'bg-emerald-500', dark: 'bg-emerald-400' },
+    buttonClass: 'bg-[#07C160] hover:bg-[#06ad56] active:bg-[#05994c]',
+  },
   [PAYMENT_TYPE.STRIPE]: {
     label: 'Stripe',
     provider: 'Stripe',
@@ -172,6 +184,7 @@ const PAYMENT_TEXT_MAP: Record<Locale, Record<string, { label: string; provider:
     [PAYMENT_TYPE.ALIPAY_DIRECT]: { label: '支付宝', provider: '支付宝' },
     [PAYMENT_TYPE.WXPAY]: { label: '微信支付', provider: '易支付' },
     [PAYMENT_TYPE.WXPAY_DIRECT]: { label: '微信支付', provider: '微信支付' },
+    [PAYMENT_TYPE.XUNHUPAY]: { label: '微信支付', provider: '虎皮椒' },
     [PAYMENT_TYPE.STRIPE]: { label: 'Stripe', provider: 'Stripe' },
   },
   en: {
@@ -179,6 +192,7 @@ const PAYMENT_TEXT_MAP: Record<Locale, Record<string, { label: string; provider:
     [PAYMENT_TYPE.ALIPAY_DIRECT]: { label: 'Alipay', provider: 'Alipay' },
     [PAYMENT_TYPE.WXPAY]: { label: 'WeChat Pay', provider: 'EasyPay' },
     [PAYMENT_TYPE.WXPAY_DIRECT]: { label: 'WeChat Pay', provider: 'WeChat Pay' },
+    [PAYMENT_TYPE.XUNHUPAY]: { label: 'WeChat Pay', provider: 'XunhuPay' },
     [PAYMENT_TYPE.STRIPE]: { label: 'Stripe', provider: 'Stripe' },
   },
 };
@@ -199,11 +213,7 @@ export function getPaymentTypeLabel(type: string, locale: Locale = 'zh'): string
   if (meta.sublabel) {
     return locale === 'en' ? `${meta.label} (${meta.sublabel})` : `${meta.label}（${meta.sublabel}）`;
   }
-  const hasDuplicate = Object.keys(PAYMENT_TYPE_META).some(
-    (key) => key !== type && getPaymentText(key, locale).label === meta.label,
-  );
-  if (!hasDuplicate || !meta.provider) return meta.label;
-  return locale === 'en' ? `${meta.label} (${meta.provider})` : `${meta.label}（${meta.provider}）`;
+  return meta.label;
 }
 
 export function getPaymentDisplayInfo(
@@ -217,6 +227,7 @@ export function getPaymentDisplayInfo(
 export function getPaymentIconType(type: string): string {
   if (type.startsWith(PAYMENT_PREFIX.ALIPAY)) return PAYMENT_PREFIX.ALIPAY;
   if (type.startsWith(PAYMENT_PREFIX.WXPAY)) return PAYMENT_PREFIX.WXPAY;
+  if (type.startsWith(PAYMENT_PREFIX.XUNHUPAY)) return PAYMENT_PREFIX.WXPAY;
   if (type.startsWith(PAYMENT_PREFIX.STRIPE)) return PAYMENT_PREFIX.STRIPE;
   return type;
 }
