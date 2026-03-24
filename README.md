@@ -235,7 +235,7 @@ PAYMENT_PROVIDERS=xunhupay
 
 | 变量          | 说明                                | 默认值                       |
 | ------------- | ----------------------------------- | ---------------------------- |
-| `APP_PORT`    | 宿主机映射端口                      | `3001`                       |
+| `APP_PORT`    | 宿主机映射端口                      | `3456`                       |
 | `DB_PASSWORD` | PostgreSQL 密码（使用自带数据库时） | `password`（**生产请修改**） |
 
 ---
@@ -280,7 +280,7 @@ docker compose -f docker-compose.hub.yml up -d
 
 ### 端口与反向代理
 
-默认宿主机端口为 `3001`（可通过 `APP_PORT` 修改）。建议使用 Nginx/Caddy 作反向代理并配置 HTTPS：
+默认宿主机端口为 `3456`（可通过 `APP_PORT` 修改）。建议使用 Nginx/Caddy 作反向代理并配置 HTTPS：
 
 ```nginx
 server {
@@ -288,7 +288,7 @@ server {
     server_name pay.example.com;
 
     location / {
-        proxy_pass http://127.0.0.1:3001;
+        proxy_pass http://127.0.0.1:3456;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

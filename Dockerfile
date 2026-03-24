@@ -35,6 +35,6 @@ RUN chmod +x start.sh && \
     PRISMA_PKG=$(find node_modules/.pnpm -path '*/prisma/build/index.js' -type f | head -1 | sed 's|/build/index.js||') && \
     ln -s /app/$PRISMA_PKG node_modules/prisma
 USER nextjs
-EXPOSE 3000
-ENV PORT=3000
+EXPOSE 3456
+ENV PORT=3456
 CMD ["./start.sh"]

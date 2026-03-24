@@ -218,7 +218,7 @@ Display a support contact image and description on the right side of the payment
 
 | Variable      | Description                      | Default                               |
 | ------------- | -------------------------------- | ------------------------------------- |
-| `APP_PORT`    | Host port mapping                | `3001`                                |
+| `APP_PORT`    | Host port mapping                | `3456`                                |
 | `DB_PASSWORD` | PostgreSQL password (bundled DB) | `password` (**change in production**) |
 
 ---
@@ -263,7 +263,7 @@ docker compose -f docker-compose.hub.yml up -d
 
 ### Reverse Proxy
 
-The default host port is `3001` (configurable via `APP_PORT`). Use Nginx or Caddy as a reverse proxy with HTTPS:
+The default host port is `3456` (configurable via `APP_PORT`). Use Nginx or Caddy as a reverse proxy with HTTPS:
 
 ```nginx
 server {
@@ -271,7 +271,7 @@ server {
     server_name pay.example.com;
 
     location / {
-        proxy_pass http://127.0.0.1:3001;
+        proxy_pass http://127.0.0.1:3456;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
