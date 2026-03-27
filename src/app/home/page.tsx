@@ -198,13 +198,13 @@ export default function HomePage() {
                 <span className="ml-2 text-sm text-slate-500">terminal</span>
               </div>
               <div className={`${monoFont.className} mt-5 space-y-2.5 text-[13px] leading-6 sm:text-[14px]`}>
-                <div className="text-cyan-300">$ curl -X POST https://aixj.vip/v1/messages</div>
+                <div className="text-cyan-300">$ curl -X POST https://pincc.wufly.top/v1/messages</div>
                 <div className="text-cyan-300">$ -H "Authorization: Bearer sk-..."</div>
                 <div className="text-slate-500"># Routing to Claude upstream...</div>
                 <div className="rounded-lg bg-emerald-400/10 px-3 py-2 text-emerald-300">
                   200 OK {'{ "content": "Hello from Claude!" }'}
                 </div>
-                <div className="text-cyan-300">$ curl -X POST https://aixj.vip/v1/responses</div>
+                <div className="text-cyan-300">$ curl -X POST https://pincc.wufly.top/v1/responses</div>
                 <div className="text-slate-500"># Routing to OpenAI upstream...</div>
                 <div className="rounded-lg bg-emerald-400/10 px-3 py-2 text-emerald-300">
                   200 OK {'{ "output": "Hello from GPT!" }'}
