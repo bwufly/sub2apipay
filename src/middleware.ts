@@ -25,10 +25,13 @@ export function middleware(request: NextRequest) {
 
   if (origins.size > 0) {
     response.headers.set('Content-Security-Policy', `frame-ancestors 'self' ${[...origins].join(' ')}`);
+    // Cross-origin iframe needs CSP frame-ancestors; X-Frame-Options would block it.
+    response.headers.delete('X-Frame-Options');
+  } else {
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   }
 
   response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   return response;
