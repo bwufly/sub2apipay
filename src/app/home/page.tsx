@@ -1,20 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 import RotatingModel from '@/components/RotatingModel';
-
-const bodyFont = IBM_Plex_Sans({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-});
-
-const monoFont = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: '云经AI - 首页',
@@ -53,7 +40,7 @@ function Badge({ children }: { children: ReactNode }) {
 
 export default function HomePage() {
   return (
-    <main className={`${bodyFont.className} home-page relative min-h-screen overflow-hidden bg-[#030305] text-white`}>
+    <main className="home-page relative min-h-screen overflow-hidden bg-[#030305] text-white">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_14%,rgba(96,165,250,0.08),transparent_18%),radial-gradient(circle_at_82%_12%,rgba(245,158,11,0.07),transparent_18%),radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.06),transparent_26%),linear-gradient(180deg,#050507_0%,#07070b_44%,#020203_100%)]" />
       <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:72px_72px]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_0,transparent_70%,rgba(0,0,0,0.66)_100%)]" />
@@ -197,7 +184,7 @@ export default function HomePage() {
                 <span className="h-4 w-4 rounded-full bg-emerald-400" />
                 <span className="ml-2 text-sm text-slate-500">terminal</span>
               </div>
-              <div className={`${monoFont.className} mt-5 space-y-2.5 text-[13px] leading-6 sm:text-[14px]`}>
+              <div className="mt-5 space-y-2.5 font-mono text-[13px] leading-6 sm:text-[14px]">
                 <div className="text-cyan-300">$ curl -X POST https://pincc.wufly.top/v1/messages</div>
                 <div className="text-cyan-300">$ -H "Authorization: Bearer sk-..."</div>
                 <div className="text-slate-500"># Routing to Claude upstream...</div>
