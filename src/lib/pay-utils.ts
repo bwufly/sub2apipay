@@ -105,6 +105,17 @@ export interface PaymentTypeMeta {
 }
 
 export const PAYMENT_TYPE_META: Record<string, PaymentTypeMeta> = {
+  [PAYMENT_TYPE.BALANCE]: {
+    label: '余额支付',
+    provider: '账户余额',
+    color: '#10B981',
+    selectedBorder: 'border-emerald-500',
+    selectedBg: 'bg-emerald-50',
+    selectedBgDark: 'bg-emerald-950',
+    iconBg: 'bg-emerald-500',
+    chartBar: { light: 'bg-emerald-500', dark: 'bg-emerald-400' },
+    buttonClass: 'bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700',
+  },
   [PAYMENT_TYPE.ALIPAY]: {
     label: '支付宝',
     provider: '易支付',
@@ -180,6 +191,7 @@ export const PAYMENT_TYPE_META: Record<string, PaymentTypeMeta> = {
 
 const PAYMENT_TEXT_MAP: Record<Locale, Record<string, { label: string; provider: string; sublabel?: string }>> = {
   zh: {
+    [PAYMENT_TYPE.BALANCE]: { label: '余额支付', provider: '账户余额' },
     [PAYMENT_TYPE.ALIPAY]: { label: '支付宝', provider: '易支付' },
     [PAYMENT_TYPE.ALIPAY_DIRECT]: { label: '支付宝', provider: '支付宝' },
     [PAYMENT_TYPE.WXPAY]: { label: '微信支付', provider: '易支付' },
@@ -188,6 +200,7 @@ const PAYMENT_TEXT_MAP: Record<Locale, Record<string, { label: string; provider:
     [PAYMENT_TYPE.STRIPE]: { label: 'Stripe', provider: 'Stripe' },
   },
   en: {
+    [PAYMENT_TYPE.BALANCE]: { label: 'Balance', provider: 'Account Balance' },
     [PAYMENT_TYPE.ALIPAY]: { label: 'Alipay', provider: 'EasyPay' },
     [PAYMENT_TYPE.ALIPAY_DIRECT]: { label: 'Alipay', provider: 'Alipay' },
     [PAYMENT_TYPE.WXPAY]: { label: 'WeChat Pay', provider: 'EasyPay' },
@@ -225,6 +238,7 @@ export function getPaymentDisplayInfo(
 }
 
 export function getPaymentIconType(type: string): string {
+  if (type.startsWith(PAYMENT_PREFIX.BALANCE)) return PAYMENT_PREFIX.BALANCE;
   if (type.startsWith(PAYMENT_PREFIX.ALIPAY)) return PAYMENT_PREFIX.ALIPAY;
   if (type.startsWith(PAYMENT_PREFIX.WXPAY)) return PAYMENT_PREFIX.WXPAY;
   if (type.startsWith(PAYMENT_PREFIX.XUNHUPAY)) return PAYMENT_PREFIX.WXPAY;

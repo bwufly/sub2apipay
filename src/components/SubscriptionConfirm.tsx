@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import type { Locale } from '@/lib/locale';
 import { pickLocaleText } from '@/lib/locale';
 import { getPaymentTypeLabel, getPaymentIconSrc } from '@/lib/pay-utils';
+import { PAYMENT_TYPE } from '@/lib/constants';
 import type { PlanInfo } from '@/components/SubscriptionPlanCard';
 import { PlanInfoDisplay } from '@/components/SubscriptionPlanCard';
 
 interface SubscriptionConfirmProps {
   plan: PlanInfo;
   paymentTypes: string[];
+  userBalance?: number;
   onBack: () => void;
   onSubmit: (paymentType: string) => void;
   loading: boolean;
@@ -21,18 +23,47 @@ interface SubscriptionConfirmProps {
 export default function SubscriptionConfirm({
   plan,
   paymentTypes,
+  userBalance,
   onBack,
   onSubmit,
   loading,
   isDark,
   locale,
 }: SubscriptionConfirmProps) {
-  const [selectedPayment, setSelectedPayment] = useState(paymentTypes[0] || '');
+  const canUseBalance = typeof userBalance === 'number' && userBalance >= plan.price;
+  const availablePaymentTypes = canUseBalance ? [PAYMENT_TYPE.BALANCE, ...paymentTypes] : paymentTypes;
+  const [selectedPayment, setSelectedPayment] = useState(availablePaymentTypes[0] || '');
+  const effectiveSelectedPayment = availablePaymentTypes.includes(selectedPayment)
+    ? selectedPayment
+    : (availablePaymentTypes[0] ?? '');
 
   const handleSubmit = () => {
-    if (selectedPayment && !loading) {
-      onSubmit(selectedPayment);
+    if (effectiveSelectedPayment && !loading) {
+      onSubmit(effectiveSelectedPayment);
     }
+  };
+
+  const renderPaymentIcon = (type: string) => {
+    if (type === PAYMENT_TYPE.BALANCE) {
+      return (
+        <span
+          className={[
+            'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+            isDark ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-50 text-emerald-600',
+          ].join(' ')}
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 7.5A2.5 2.5 0 0 1 6.5 5h9A2.5 2.5 0 0 1 18 7.5v9A2.5 2.5 0 0 1 15.5 19h-9A2.5 2.5 0 0 1 4 16.5v-9Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18 9h1.25A1.75 1.75 0 0 1 21 10.75v2.5A1.75 1.75 0 0 1 19.25 15H18V9Z" />
+            <circle cx="16" cy="12" r="1.1" fill="currentColor" stroke="none" />
+          </svg>
+        </span>
+      );
+    }
+
+    const iconSrc = getPaymentIconSrc(type);
+    if (!iconSrc) return null;
+    return <Image src={iconSrc} alt="" width={24} height={24} className="h-6 w-6 shrink-0 object-contain" />;
   };
 
   return (
@@ -73,9 +104,8 @@ export default function SubscriptionConfirm({
           {pickLocaleText(locale, '支付方式', 'Payment Method')}
         </label>
         <div className="space-y-2">
-          {paymentTypes.map((type) => {
-            const isSelected = selectedPayment === type;
-            const iconSrc = getPaymentIconSrc(type);
+          {availablePaymentTypes.map((type) => {
+            const isSelected = effectiveSelectedPayment === type;
             return (
               <button
                 key={type}
@@ -108,18 +138,36 @@ export default function SubscriptionConfirm({
                 </span>
 
                 {/* Icon */}
-                {iconSrc && (
-                  <Image src={iconSrc} alt="" width={24} height={24} className="h-6 w-6 shrink-0 object-contain" />
-                )}
+                {renderPaymentIcon(type)}
 
                 {/* Label */}
-                <span className={['text-sm font-medium', isDark ? 'text-slate-200' : 'text-slate-700'].join(' ')}>
-                  {getPaymentTypeLabel(type, locale)}
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className={['text-sm font-medium', isDark ? 'text-slate-200' : 'text-slate-700'].join(' ')}>
+                    {getPaymentTypeLabel(type, locale)}
+                  </span>
+                  {type === PAYMENT_TYPE.BALANCE && userBalance !== undefined && (
+                    <span className={['mt-1 text-xs', isDark ? 'text-emerald-300/80' : 'text-emerald-600'].join(' ')}>
+                      {pickLocaleText(
+                        locale,
+                        `当前余额 ¥${userBalance.toFixed(2)}，支付后剩余 ¥${Math.max(userBalance - plan.price, 0).toFixed(2)}`,
+                        `Current balance ¥${userBalance.toFixed(2)}, remaining ¥${Math.max(userBalance - plan.price, 0).toFixed(2)}`,
+                      )}
+                    </span>
+                  )}
                 </span>
               </button>
             );
           })}
         </div>
+        {!canUseBalance && userBalance !== undefined && (
+          <p className={['mt-2 text-xs', isDark ? 'text-slate-400' : 'text-slate-500'].join(' ')}>
+            {pickLocaleText(
+              locale,
+              `当前余额 ¥${userBalance.toFixed(2)}，不足以支付该套餐`,
+              `Current balance is ¥${userBalance.toFixed(2)}, which is not enough for this plan`,
+            )}
+          </p>
+        )}
       </div>
 
       {/* Amount to pay */}
@@ -138,11 +186,11 @@ export default function SubscriptionConfirm({
       {/* Submit button */}
       <button
         type="button"
-        disabled={!selectedPayment || loading}
+        disabled={!effectiveSelectedPayment || loading}
         onClick={handleSubmit}
         className={[
           'w-full rounded-xl py-3 text-sm font-bold text-white transition-colors',
-          selectedPayment && !loading
+          effectiveSelectedPayment && !loading
             ? 'bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700'
             : isDark
               ? 'cursor-not-allowed bg-slate-700 text-slate-400'

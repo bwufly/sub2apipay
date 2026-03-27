@@ -41,6 +41,7 @@ describe('GET /api/orders/[id]', () => {
       id: 'order-001',
       status: 'PENDING',
       expiresAt: new Date('2026-03-10T00:00:00.000Z'),
+      orderType: 'balance',
       paidAt: null,
       completedAt: null,
     });
@@ -58,6 +59,7 @@ describe('GET /api/orders/[id]', () => {
 
     expect(response.status).toBe(200);
     expect(data.id).toBe('order-001');
+    expect(data.orderType).toBe('balance');
     expect(data.paymentSuccess).toBe(false);
   });
 

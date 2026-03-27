@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db';
 import { getEnv } from '@/lib/config';
-import { ORDER_STATUS } from '@/lib/constants';
+import { ORDER_STATUS, PAYMENT_TYPE } from '@/lib/constants';
 import { generateRechargeCode } from './code-gen';
 import { getMethodDailyLimit } from './limits';
 import { getMethodFeeRate, calculatePayAmount } from './fee';
@@ -142,6 +142,14 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   if (user.status !== 'active') {
     throw new OrderError('USER_INACTIVE', message(locale, '用户账号已被禁用', 'User account is disabled'), 422);
   }
+  const isBalanceSubscriptionPayment = orderType === 'subscription' && input.paymentType === PAYMENT_TYPE.BALANCE;
+  if (isBalanceSubscriptionPayment && user.balance < input.amount) {
+    throw new OrderError(
+      'INSUFFICIENT_BALANCE',
+      message(locale, '余额不足，请先充值后再购买', 'Insufficient balance. Please top up before purchasing'),
+      422,
+    );
+  }
 
   const feeRate = getMethodFeeRate(input.paymentType);
   const payAmountStr = calculatePayAmount(input.amount, feeRate);
@@ -258,11 +266,169 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     return { ...created, rechargeCode };
   });
 
+  const statusAccessToken = createOrderStatusAccessToken(order.id, input.userId);
+  if (isBalanceSubscriptionPayment) {
+    let balanceDeducted = false;
+    let rollbackError: unknown;
+
+    try {
+      await subtractBalance(
+        input.userId,
+        input.amount,
+        `sub2apipay balance payment order:${order.id}`,
+        `sub2apipay:balance-pay:${order.id}`,
+      );
+      balanceDeducted = true;
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: ORDER_STATUS.PAID,
+          paidAt: new Date(),
+        },
+      });
+
+      await prisma.auditLog.create({
+        data: {
+          orderId: order.id,
+          action: 'ORDER_CREATED',
+          detail: JSON.stringify({
+            userId: input.userId,
+            amount: input.amount,
+            paymentType: input.paymentType,
+            orderType,
+            balancePaid: true,
+            ...(subscriptionPlan && {
+              planId: subscriptionPlan.id,
+              planName: subscriptionPlan.name,
+              groupId: subscriptionPlan.groupId,
+            }),
+          }),
+          operator: `user:${input.userId}`,
+        },
+      });
+
+      await prisma.auditLog.create({
+        data: {
+          orderId: order.id,
+          action: 'ORDER_PAID_BY_BALANCE',
+          detail: JSON.stringify({
+            amount: input.amount,
+            orderType,
+            planId: subscriptionPlan?.id ?? null,
+          }),
+          operator: `user:${input.userId}`,
+        },
+      });
+
+      await executeFulfillment(order.id);
+
+      const latest = await prisma.order.findUnique({
+        where: { id: order.id },
+        select: { status: true },
+      });
+
+      return {
+        orderId: order.id,
+        amount: input.amount,
+        payAmount: payAmountNum,
+        feeRate,
+        status: latest?.status ?? ORDER_STATUS.COMPLETED,
+        paymentType: input.paymentType,
+        userName: user.username,
+        userBalance: Math.max(0, user.balance - input.amount),
+        expiresAt,
+        statusAccessToken,
+      };
+    } catch (error) {
+      if (balanceDeducted) {
+        try {
+          await addBalance(
+            input.userId,
+            input.amount,
+            `sub2apipay balance payment rollback order:${order.id}`,
+            `sub2apipay:balance-pay-rollback:${order.id}`,
+          );
+
+          await prisma.auditLog.create({
+            data: {
+              orderId: order.id,
+              action: 'BALANCE_PAYMENT_ROLLBACK',
+              detail: JSON.stringify({
+                amount: input.amount,
+                reason: error instanceof Error ? error.message : String(error),
+              }),
+              operator: 'system',
+            },
+          });
+        } catch (rollbackErr) {
+          rollbackError = rollbackErr;
+          await prisma.auditLog.create({
+            data: {
+              orderId: order.id,
+              action: 'BALANCE_PAYMENT_ROLLBACK_FAILED',
+              detail: JSON.stringify({
+                paymentError: error instanceof Error ? error.message : String(error),
+                rollbackError: rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr),
+                amount: input.amount,
+              }),
+              operator: 'system',
+            },
+          });
+        }
+      }
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: ORDER_STATUS.FAILED,
+          failedAt: new Date(),
+          failedReason: [
+            error instanceof Error ? error.message : String(error),
+            rollbackError
+              ? `ROLLBACK_FAILED: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' | '),
+          ...(balanceDeducted && !rollbackError ? { paidAt: null } : {}),
+        },
+      });
+
+      const rawMessage = error instanceof Error ? error.message : String(error);
+      if (!balanceDeducted && rawMessage.includes('Subtract balance failed')) {
+        throw new OrderError(
+          'INSUFFICIENT_BALANCE',
+          message(
+            locale,
+            '余额不足或余额已变更，请刷新页面后重试',
+            'Insufficient or changed balance. Please refresh the page and try again',
+          ),
+          422,
+        );
+      }
+
+      throw new OrderError(
+        'BALANCE_PAYMENT_FAILED',
+        rollbackError
+          ? message(
+              locale,
+              '余额支付失败，且回滚未完成，请联系管理员处理',
+              'Balance payment failed and rollback did not complete. Please contact the administrator',
+            )
+          : message(
+              locale,
+              '余额支付失败，扣减金额已退回，请稍后重试',
+              'Balance payment failed and your balance has been restored. Please try again later',
+            ),
+        502,
+      );
+    }
+  }
+
   try {
     initPaymentProviders();
     const provider = paymentRegistry.getProvider(input.paymentType);
-
-    const statusAccessToken = createOrderStatusAccessToken(order.id, input.userId);
     const orderResultUrl = buildOrderResultUrl(env.NEXT_PUBLIC_APP_URL, order.id, input.userId);
 
     // 只有 easypay 从外部传入 notifyUrl，return_url 统一回到带访问令牌的结果页
@@ -998,8 +1164,9 @@ export async function processRefund(input: RefundInput): Promise<RefundResult> {
 
   const rechargeAmount = Number(order.amount);
   const refundAmount = Number(order.payAmount ?? order.amount);
+  const isBalancePaidOrder = order.paymentType === PAYMENT_TYPE.BALANCE;
 
-  if (!input.force) {
+  if (!input.force && !isBalancePaidOrder) {
     try {
       const user = await getUser(order.userId);
       if (user.balance < rechargeAmount) {
@@ -1035,54 +1202,63 @@ export async function processRefund(input: RefundInput): Promise<RefundResult> {
   }
 
   try {
-    // 1. 先扣减用户余额（安全方向：先扣后退）
-    await subtractBalance(
-      order.userId,
-      rechargeAmount,
-      `sub2apipay refund order:${order.id}`,
-      `sub2apipay:refund:${order.id}`,
-    );
+    if (isBalancePaidOrder) {
+      await addBalance(
+        order.userId,
+        rechargeAmount,
+        `sub2apipay refund balance payment order:${order.id}`,
+        `sub2apipay:refund:${order.id}`,
+      );
+    } else {
+      // 1. 先扣减用户余额（安全方向：先扣后退）
+      await subtractBalance(
+        order.userId,
+        rechargeAmount,
+        `sub2apipay refund order:${order.id}`,
+        `sub2apipay:refund:${order.id}`,
+      );
 
-    // 2. 调用支付网关退款
-    if (order.paymentTradeNo) {
-      try {
-        initPaymentProviders();
-        const provider = paymentRegistry.getProvider(order.paymentType as PaymentType);
-        await provider.refund({
-          tradeNo: order.paymentTradeNo,
-          orderId: order.id,
-          amount: refundAmount,
-          reason: input.reason,
-        });
-      } catch (gatewayError) {
-        // 3. 网关退款失败 — 恢复已扣减的余额
+      // 2. 调用支付网关退款
+      if (order.paymentTradeNo) {
         try {
-          await addBalance(
-            order.userId,
-            rechargeAmount,
-            `sub2apipay refund rollback order:${order.id}`,
-            `sub2apipay:refund-rollback:${order.id}`,
-          );
-        } catch (rollbackError) {
-          // 余额恢复也失败，记录审计日志并标记需要补偿，便于定时任务或管理员重试
-          console.error(
-            `[CRITICAL] Refund rollback failed for order ${input.orderId}: balance deducted ${rechargeAmount} but gateway refund and balance restoration both failed. Manual intervention required.`,
-          );
-          await prisma.auditLog.create({
-            data: {
-              orderId: input.orderId,
-              action: 'REFUND_ROLLBACK_FAILED',
-              detail: JSON.stringify({
-                gatewayError: gatewayError instanceof Error ? gatewayError.message : String(gatewayError),
-                rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
-                rechargeAmount,
-                needsBalanceCompensation: true,
-              }),
-              operator: 'admin',
-            },
+          initPaymentProviders();
+          const provider = paymentRegistry.getProvider(order.paymentType as PaymentType);
+          await provider.refund({
+            tradeNo: order.paymentTradeNo,
+            orderId: order.id,
+            amount: refundAmount,
+            reason: input.reason,
           });
+        } catch (gatewayError) {
+          // 3. 网关退款失败 — 恢复已扣减的余额
+          try {
+            await addBalance(
+              order.userId,
+              rechargeAmount,
+              `sub2apipay refund rollback order:${order.id}`,
+              `sub2apipay:refund-rollback:${order.id}`,
+            );
+          } catch (rollbackError) {
+            // 余额恢复也失败，记录审计日志并标记需要补偿，便于定时任务或管理员重试
+            console.error(
+              `[CRITICAL] Refund rollback failed for order ${input.orderId}: balance deducted ${rechargeAmount} but gateway refund and balance restoration both failed. Manual intervention required.`,
+            );
+            await prisma.auditLog.create({
+              data: {
+                orderId: input.orderId,
+                action: 'REFUND_ROLLBACK_FAILED',
+                detail: JSON.stringify({
+                  gatewayError: gatewayError instanceof Error ? gatewayError.message : String(gatewayError),
+                  rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+                  rechargeAmount,
+                  needsBalanceCompensation: true,
+                }),
+                operator: 'admin',
+              },
+            });
+          }
+          throw gatewayError;
         }
-        throw gatewayError;
       }
     }
 
@@ -1101,7 +1277,13 @@ export async function processRefund(input: RefundInput): Promise<RefundResult> {
       data: {
         orderId: input.orderId,
         action: 'REFUND_SUCCESS',
-        detail: JSON.stringify({ rechargeAmount, refundAmount, reason: input.reason, force: input.force }),
+        detail: JSON.stringify({
+          rechargeAmount,
+          refundAmount,
+          reason: input.reason,
+          force: input.force,
+          refundedToBalance: isBalancePaidOrder,
+        }),
         operator: 'admin',
       },
     });

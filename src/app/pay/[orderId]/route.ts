@@ -48,6 +48,7 @@ function serializeScriptString(value: string): string {
 
 function getStatusDisplay(order: OrderStatusLike) {
   return getOrderDisplayState({
+    orderType: order.orderType,
     status: order.status,
     ...deriveOrderState(order),
   });
@@ -254,6 +255,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       id: true,
       amount: true,
       payAmount: true,
+      orderType: true,
       paymentType: true,
       status: true,
       expiresAt: true,
@@ -277,6 +279,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (order.expiresAt.getTime() <= Date.now()) {
     return renderStatusPage({
       id: order.id,
+      orderType: order.orderType,
       status: ORDER_STATUS.EXPIRED,
       paidAt: order.paidAt,
       completedAt: order.completedAt,

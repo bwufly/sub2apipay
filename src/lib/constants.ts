@@ -33,6 +33,7 @@ export const REFUND_STATUSES = new Set<string>([
 
 /** 支付方式标识 */
 export const PAYMENT_TYPE = {
+  BALANCE: 'balance',
   ALIPAY: 'alipay',
   ALIPAY_DIRECT: 'alipay_direct',
   WXPAY: 'wxpay',
@@ -43,6 +44,7 @@ export const PAYMENT_TYPE = {
 
 /** 支付方式前缀（用于 startsWith 判断） */
 export const PAYMENT_PREFIX = {
+  BALANCE: 'balance',
   ALIPAY: 'alipay',
   WXPAY: 'wxpay',
   XUNHUPAY: 'xunhupay',

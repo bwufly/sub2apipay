@@ -8,7 +8,7 @@ import { ORDER_STATUS_ACCESS_QUERY_KEY, verifyOrderStatusAccessToken } from '@/l
  * 订单状态轮询接口。
  *
  * 返回最小必要信息供前端判断：
- * - 原始订单状态（status / expiresAt）
+ * - 原始订单状态（status / expiresAt / orderType）
  * - 支付是否成功（paymentSuccess）
  * - 充值是否成功 / 当前充值阶段（rechargeSuccess / rechargeStatus）
  */
@@ -29,6 +29,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       expiresAt: true,
       paidAt: true,
       completedAt: true,
+      orderType: true,
       failedReason: true,
     },
   });
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     id: order.id,
     status: order.status,
     expiresAt: order.expiresAt,
+    orderType: order.orderType,
     paymentSuccess: derived.paymentSuccess,
     rechargeSuccess: derived.rechargeSuccess,
     rechargeStatus: derived.rechargeStatus,

@@ -419,7 +419,21 @@ function PayContent() {
         expiresAt: data.expiresAt,
         statusAccessToken: data.statusAccessToken,
       });
-      setStep('paying');
+      if (data.status === 'COMPLETED') {
+        setFinalOrderState({
+          id: data.orderId,
+          status: data.status,
+          expiresAt: data.expiresAt,
+          orderType: 'balance',
+          paymentSuccess: true,
+          rechargeSuccess: true,
+          rechargeStatus: 'success',
+          failedReason: null,
+        });
+        setStep('result');
+      } else {
+        setStep('paying');
+      }
     } catch {
       setError(pickLocaleText(locale, '网络错误，请稍后重试', 'Network error'));
     } finally {
@@ -468,7 +482,21 @@ function PayContent() {
         expiresAt: data.expiresAt,
         statusAccessToken: data.statusAccessToken,
       });
-      setStep('paying');
+      if (data.status === 'COMPLETED') {
+        setFinalOrderState({
+          id: data.orderId,
+          status: data.status,
+          expiresAt: data.expiresAt,
+          orderType: 'subscription',
+          paymentSuccess: true,
+          rechargeSuccess: true,
+          rechargeStatus: 'success',
+          failedReason: null,
+        });
+        setStep('result');
+      } else {
+        setStep('paying');
+      }
     } catch {
       setError(pickLocaleText(locale, '网络错误，请稍后重试', 'Network error'));
     } finally {
@@ -884,6 +912,7 @@ function PayContent() {
               <SubscriptionConfirm
                 plan={selectedPlan}
                 paymentTypes={config.enabledPaymentTypes}
+                userBalance={userInfo?.balance}
                 onBack={() => setSelectedPlan(null)}
                 onSubmit={handleSubscriptionSubmit}
                 loading={loading}

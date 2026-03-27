@@ -53,6 +53,32 @@ describe('order status helpers', () => {
     expect(display.icon).toBe('✓');
   });
 
+  it('maps completed subscription order to subscription success display', () => {
+    const display = getOrderDisplayState({
+      status: ORDER_STATUS.COMPLETED,
+      orderType: 'subscription',
+      paymentSuccess: true,
+      rechargeSuccess: true,
+      rechargeStatus: 'success',
+    });
+
+    expect(display.label).toBe('订阅成功');
+    expect(display.message).toContain('订阅已开通');
+  });
+
+  it('maps pending subscription fulfillment to subscription processing display', () => {
+    const display = getOrderDisplayState({
+      status: ORDER_STATUS.RECHARGING,
+      orderType: 'subscription',
+      paymentSuccess: true,
+      rechargeSuccess: false,
+      rechargeStatus: 'recharging',
+    });
+
+    expect(display.label).toBe('订阅开通中');
+    expect(display.message).toContain('开通订阅');
+  });
+
   it('maps pending order to waiting-for-payment display', () => {
     const display = getOrderDisplayState({
       status: ORDER_STATUS.PENDING,
